@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 
-import { getUsers, getUsersCount } from "../db/users/users";
+import { getUsers, getUsersCount, getAddressByUserId } from "../db/users/users";
 
 const router = Router();
 
@@ -13,7 +13,14 @@ router.get("/", async (req: Request, res: Response) => {
   }
 
   const users = await getUsers(pageNumber, pageSize);
-  res.send(users);
+  // Fetch address for each user
+  const usersWithAddress = await Promise.all(
+    users.map(async (user) => {
+      const address = await getAddressByUserId(user.id);
+      return { ...user, address };
+    })
+  );
+  res.send(usersWithAddress);
 });
 
 router.get("/count", async (req: Request, res: Response) => {

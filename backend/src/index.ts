@@ -2,16 +2,16 @@ import express, { Application } from "express";
 import config from "config";
 import postsRouter from "./routes/posts";
 import usersRouter from "./routes/users";
+import cors from "cors";
+
 const port = config.get("port") as number;
 
 const app: Application = express();
+app.use(cors());
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
 
