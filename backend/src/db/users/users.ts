@@ -1,54 +1,48 @@
 import { connection } from "../connection";
-
 import { selectCountOfUsersTemplate, selectUsersTemplate, selectAddressByUserIdTemplate } from "./query-templates";
 import { User, Address } from "./types";
 
-// function to get address by id
+// Function to get address by user id
 export const getAddressByUserId = (userId: number): Promise<Address | null> =>
   new Promise((resolve, reject) => {
-    connection.get<{ street?: string; state?: string; city?: string; zipcode?: string }>(
-      selectAddressByUserIdTemplate,
-      [userId],
-      (error, result) => {
-        if (error) {
-          reject(error);
-        }
-        if (!result) {
-          resolve(null);
-        } else {
-          
-          const address = {
-            street: result.street || "",
-            state: result.state || "",
-            city: result.city || "",
-            zipcode: result.zipcode || "",
-          };
-          resolve(address);
-        }
+    try {
+      const stmt = connection.prepare(selectAddressByUserIdTemplate);
+      const result = stmt.get(userId) as any;
+      
+      if (!result) {
+        resolve(null);
+      } else {
+        const address: Address = {
+          street: result.street || "",
+          state: result.state || "",
+          city: result.city || "",
+          zipcode: result.zipcode || "",
+        };
+        resolve(address);
       }
-    );
+    } catch (error) {
+      reject(error);
+    }
   });
 
 export const getUsersCount = (): Promise<number> =>
   new Promise((resolve, reject) => {
-    connection.get<{ count: number }>(selectCountOfUsersTemplate, (error, results) => {
-      if (error) {
-        reject(error);
-      }
-      resolve(results.count);
-    });
+    try {
+      const stmt = connection.prepare(selectCountOfUsersTemplate);
+      const result = stmt.get() as any;
+      resolve(result.count);
+    } catch (error) {
+      reject(error);
+    }
   });
 
 export const getUsers = (pageNumber: number, pageSize: number): Promise<User[]> =>
   new Promise((resolve, reject) => {
-    connection.all<User>(
-      selectUsersTemplate,
-      [pageNumber * pageSize, pageSize],
-      (error, results) => {
-        if (error) {
-          reject(error);
-        }
-        resolve(results);
-      }
-    );
+    try {
+      const stmt = connection.prepare(selectUsersTemplate);
+      const results = stmt.all(pageNumber * pageSize, pageSize);
+      resolve(results as User[]);
+    } catch (error) {
+      reject(error);
+    }
   });
